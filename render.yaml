@@ -5,10 +5,9 @@ services:
     repo: https://github.com/teaw153-stack/Willis-Dynasty-Trust-8
     plan: free
     region: oregon
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --no-build-isolation -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     autoDeployTrigger: commit
-    pythonVersion: "3.11.9"
     envVars:
       - key: STRIPE_SECRET_KEY
         sync: false
