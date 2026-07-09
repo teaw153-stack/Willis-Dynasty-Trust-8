@@ -1,0 +1,2 @@
+cd path/to/moresimple-tax
+git subtree push --prefix=backend https://github.com/teaw153-stack/Willis-Dynasty-Trust-8.git main
