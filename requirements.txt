@@ -1,7 +1,8 @@
 fastapi==0.104.1
-uvicorn==0.24.0
+uvicorn[standard]==0.24.0
 stripe==7.8.0
 supabase==2.3.0
 python-dotenv==1.0.0
 pydantic==2.5.0
+pydantic-core==2.14.1
 httpx==0.25.2
