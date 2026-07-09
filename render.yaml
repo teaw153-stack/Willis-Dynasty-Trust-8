@@ -1,9 +1,13 @@
 services:
   - type: web
-    name: moresimple-tax-api
+    name: BOSSYBOO
     runtime: python
+    repo: https://github.com/teaw153-stack/Willis-Dynasty-Trust-8
+    plan: free
+    region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeployTrigger: commit
     envVars:
       - key: STRIPE_SECRET_KEY
         sync: false
