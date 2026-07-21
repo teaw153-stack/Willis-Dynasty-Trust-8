@@ -138,8 +138,10 @@ This app requires a test account to access subscription features. Please use:
 
 - **Email:** reviewer@moresimpletax.com
 - **Password:** AppReview2026!
+- **Account tier:** Premium (all 10 calculators unlocked, onboarding pre-completed)
 
-The app uses Stripe for payments. In the test environment, no real charges are made.
+The app uses Stripe for payments in test mode — no real charges are made during review.
+The reviewer account bypasses onboarding and has full Premium access for efficient review.
 Tax strategies are provided for informational and educational purposes only. Professional tax advice is delivered by Theia Willis, CTEC #A123456.
 
 ---
