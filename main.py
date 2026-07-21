@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Header, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import stripe
@@ -311,3 +311,87 @@ async def create_portal_session(data: dict):
     )
     return {"url": session.url}
 
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_policy():
+    return """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — More Simple Tax</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 24px; color: #1a1a2e; line-height: 1.7; }
+    h1 { color: #0B1B3B; border-bottom: 3px solid #FF3AF2; padding-bottom: 12px; }
+    h2 { color: #0B1B3B; margin-top: 36px; }
+    a { color: #0B1B3B; }
+    .badge { background: #0B1B3B; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+    footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; font-size: 13px; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p><span class="badge">More Simple Tax</span> &nbsp; Effective Date: July 21, 2026</p>
+
+  <p>More Simple Tax ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application and associated services.</p>
+
+  <h2>1. Information We Collect</h2>
+  <ul>
+    <li><strong>Account Information:</strong> Email address and password (hashed) when you create an account.</li>
+    <li><strong>Business Profile:</strong> Information you provide during onboarding (income, business type, filing status) used solely to personalize your tax strategy results.</li>
+    <li><strong>Subscription Data:</strong> Your current plan tier and billing status, managed via Stripe.</li>
+    <li><strong>Usage Data:</strong> Which strategies you view and interact with, used to improve the app experience.</li>
+  </ul>
+
+  <h2>2. How We Use Your Information</h2>
+  <ul>
+    <li>To create and manage your account</li>
+    <li>To personalize your tax savings dashboard</li>
+    <li>To process payments and manage subscriptions via Stripe</li>
+    <li>To improve app features and fix bugs</li>
+    <li>To communicate service updates (no marketing without consent)</li>
+  </ul>
+
+  <h2>3. Data Sharing</h2>
+  <p>We do <strong>not</strong> sell your personal data. We share data only with:</p>
+  <ul>
+    <li><strong>Supabase:</strong> Our secure database provider (data stored in encrypted cloud infrastructure)</li>
+    <li><strong>Stripe:</strong> Payment processing only — we never store your card details</li>
+  </ul>
+
+  <h2>4. Data Security</h2>
+  <p>All data is encrypted in transit (TLS 1.2+) and at rest. Authentication is handled by Supabase Auth with industry-standard JWT tokens. We never store plaintext passwords.</p>
+
+  <h2>5. Data Retention</h2>
+  <p>We retain your account data for as long as your account is active. You may request deletion at any time by emailing <a href="mailto:support@moresimpletax.com">support@moresimpletax.com</a> — we will delete your data within 30 days.</p>
+
+  <h2>6. Your Rights</h2>
+  <ul>
+    <li>Access or download your data</li>
+    <li>Correct inaccurate information</li>
+    <li>Request deletion of your account and data</li>
+    <li>Opt out of non-essential communications</li>
+  </ul>
+  <p>To exercise any of these rights, contact us at <a href="mailto:support@moresimpletax.com">support@moresimpletax.com</a>.</p>
+
+  <h2>7. Children's Privacy</h2>
+  <p>More Simple Tax is not directed at children under 13. We do not knowingly collect data from minors.</p>
+
+  <h2>8. Disclaimer</h2>
+  <p>Tax strategies in this app are provided for informational and educational purposes only. More Simple Tax does not provide licensed tax, legal, or financial advice. Theia Willis (CTEC #A123456) is the credentialed tax professional referenced in this application. Consult a qualified tax professional before implementing any strategy.</p>
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this policy periodically. We will notify you of significant changes via in-app notification or email.</p>
+
+  <h2>10. Contact</h2>
+  <p>More Simple Tax<br>
+  Email: <a href="mailto:support@moresimpletax.com">support@moresimpletax.com</a><br>
+  Website: <a href="https://bossyboo-5e1a.onrender.com">https://bossyboo-5e1a.onrender.com</a></p>
+
+  <footer>
+    &copy; 2026 More Simple Tax. Built with Theia Willis, CTEC #A123456.
+  </footer>
+</body>
+</html>
+"""
