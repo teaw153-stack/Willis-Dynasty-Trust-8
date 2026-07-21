@@ -138,10 +138,13 @@ This app requires a test account to access subscription features. Please use:
 
 - **Email:** reviewer@moresimpletax.com
 - **Password:** AppReview2026!
-- **Account tier:** Premium (all 10 calculators unlocked, onboarding pre-completed)
+- **Account tier:** Premium (all 10 calculators unlocked)
+- **Onboarding:** Pre-completed — drops directly into Dashboard
+- **Supabase User ID:** ffd113df-4fe6-4a6d-9ef5-a75512946963 ✅ Confirmed live
 
-The app uses Stripe for payments in test mode — no real charges are made during review.
-The reviewer account bypasses onboarding and has full Premium access for efficient review.
+The app uses Stripe in **test mode** — no real charges are made during review.
+The reviewer account has full Premium access with onboarding pre-completed for efficient review.
+All 10 tax strategy calculators are accessible immediately upon login.
 Tax strategies are provided for informational and educational purposes only. Professional tax advice is delivered by Theia Willis, CTEC #A123456.
 
 ---
