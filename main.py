@@ -11,6 +11,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="More Simple Tax API")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    return JSONResponse(status_code=500, content={"error": str(exc), "type": type(exc).__name__})
+
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -281,15 +287,20 @@ async def create_checkout_session(data: dict):
     if not user_id:
         return JSONResponse(status_code=400, content={"error": "user_id is required"})
 
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        line_items=[{"price": price_id, "quantity": 1}],
-        subscription_data={"trial_period_days": 7},
-        client_reference_id=user_id,
-        success_url=data.get("success_url", "https://moresimple.tax/success"),
-        cancel_url=data.get("cancel_url",   "https://moresimple.tax/pricing"),
-    )
-    return {"url": session.url}
+    try:
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            subscription_data={"trial_period_days": 7},
+            client_reference_id=user_id,
+            success_url=data.get("success_url", "https://moresimple.tax/success"),
+            cancel_url=data.get("cancel_url",   "https://moresimple.tax/pricing"),
+        )
+        return {"url": session.url}
+    except stripe.error.StripeError as e:
+        return JSONResponse(status_code=502, content={"error": str(e), "type": "stripe_error"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e), "type": type(e).__name__})
 
 
 @app.post("/stripe/portal")
@@ -299,3 +310,4 @@ async def create_portal_session(data: dict):
         return_url="moresimpletax://profile",
     )
     return {"url": session.url}
+
