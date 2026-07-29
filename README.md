@@ -42,3 +42,4 @@ Backend is already live — no need to run anything locally for that. constants/
 https://bossyboo-5e1a.onrender.com
 
 So the full flow — signup → dashboard → upgrade → billing portal — works from the moment you scan the QR code. 🚀
+f6406d3d6c1e5aff674ace4ebb5f8dcea6fa2fdd
