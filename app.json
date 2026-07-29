@@ -19,7 +19,8 @@
         "NSCameraUsageDescription": "Used to scan tax documents.",
         "NSPhotoLibraryUsageDescription": "Used to upload tax documents.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,16 +28,38 @@
         "backgroundColor": "#0B1B3B"
       },
       "package": "com.moresimpletax.app",
-      "versionCode": 1
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "com.android.vending.BILLING",
+        "com.google.android.gms.auth.api.signin",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "plugins": [
       "expo-font",
-      "expo-linear-gradient"
+      "expo-linear-gradient",
+      [
+        "@react-native-firebase/app",
+        {
+          "android": {
+            "googleServicesFile": "./google-services.json"
+          }
+        }
+      ],
+      [
+        "@react-native-firebase/crashlytics",
+        {
+          "debugSymbolUpload": false
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "YOUR_EAS_PROJECT_ID"
-      }
+      },
+      "googleWebClientId": "YOUR_GOOGLE_WEB_CLIENT_ID"
     },
     "runtimeVersion": {
       "policy": "appVersion"
