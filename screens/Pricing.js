@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Linking, Alert, ActivityIndicator,
+  TouchableOpacity, Linking, Alert, ActivityIndicator, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Gradients } from '../constants/Colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { API_BASE_URL } from '../constants/config';
+import {
+  subscribeViaGooglePlay,
+  restorePurchases,
+  isGooglePlayBillingAvailable,
+} from '../lib/googlePlayBilling';
+import { logEvent, AnalyticsEvents, logScreenView } from '../lib/analytics';
 
 const PLANS = [
   {
@@ -66,8 +72,11 @@ export default function Pricing({ navigation }) {
   const [loading,  setLoading]  = useState(false);
   const [userId,   setUserId]   = useState(null);
 
-  // Grab the authenticated user's ID on mount — needed for client_reference_id
+  // Detect if we should use Google Play Billing (Android) or Stripe (iOS)
+  const useGooglePlayBilling = isGooglePlayBillingAvailable();
+
   useEffect(() => {
+    logScreenView('Pricing');
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id);
     });
@@ -78,26 +87,51 @@ export default function Pricing({ navigation }) {
       Alert.alert('Sign in required', 'Please sign in before subscribing.');
       return;
     }
+
+    setLoading(true);
+    logEvent(AnalyticsEvents.SUBSCRIPTION_STARTED, { tier: planId, platform: Platform.OS });
+
+    try {
+      if (useGooglePlayBilling) {
+        // Android: use Google Play Billing
+        await subscribeViaGooglePlay(planId);
+        // Purchase listener in googlePlayBilling.js handles verification + tier upgrade
+      } else {
+        // iOS / Web: use Stripe checkout
+        const res = await fetch(`${API_BASE_URL}/stripe/checkout`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tier:         planId,
+            user_id:      userId,
+            success_url:  'moresimpletax://success',
+            cancel_url:   'moresimpletax://pricing',
+          }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          await Linking.openURL(data.url);
+        } else {
+          Alert.alert('Error', data.error || 'Could not create checkout session.');
+        }
+      }
+    } catch (error) {
+      Alert.alert('Subscription Error', error.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    if (!useGooglePlayBilling) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/stripe/checkout`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tier:         planId,
-          user_id:      userId,            // ← passed as client_reference_id to Stripe
-          success_url:  'moresimpletax://success',
-          cancel_url:   'moresimpletax://pricing',
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        await Linking.openURL(data.url);
-      } else {
-        Alert.alert('Error', data.error || 'Could not create checkout session.');
+      const purchases = await restorePurchases();
+      if (!purchases || purchases.length === 0) {
+        Alert.alert('No purchases found', 'There are no previous purchases to restore.');
       }
-    } catch {
-      Alert.alert('Error', 'Could not reach payment server. Please try again.');
+    } catch (error) {
+      Alert.alert('Restore failed', error.message);
     } finally {
       setLoading(false);
     }
@@ -160,12 +194,25 @@ export default function Pricing({ navigation }) {
         ))}
       </View>
 
-      {/* Remove before go-live */}
-      <View style={styles.testCard}>
-        <Text style={styles.testCardText}>
-          🧪 Test: 4242 4242 4242 4242 · Any expiry · Any CVC
-        </Text>
-      </View>
+      {/* Restore purchases button (Android only — required by Google Play policy) */}
+      {useGooglePlayBilling && (
+        <TouchableOpacity
+          style={styles.restoreBtn}
+          onPress={handleRestorePurchases}
+          disabled={loading}
+        >
+          <Text style={styles.restoreText}>Restore Purchases</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Test card info — remove before production go-live (iOS only) */}
+      {!useGooglePlayBilling && (
+        <View style={styles.testCard}>
+          <Text style={styles.testCardText}>
+            🧪 Test: 4242 4242 4242 4242 · Any expiry · Any CVC
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -191,6 +238,8 @@ const styles = StyleSheet.create({
   featureText:      { color: Colors.text, marginLeft: 8, fontSize: 14 },
   subscribeBtn:     { borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
   subscribeBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  restoreBtn:       { alignItems: 'center', padding: 16, marginHorizontal: 16, marginBottom: 8 },
+  restoreText:      { color: Colors.neonBlue, fontSize: 14, fontWeight: '600' },
   testCard:         { margin: 16, padding: 12, backgroundColor: Colors.cardElevated, borderRadius: 10, alignItems: 'center' },
   testCardText:     { color: Colors.textSecondary, fontSize: 12 },
 });
