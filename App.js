@@ -1,12 +1,17 @@
 import 'react-native-url-polyfill/auto';
 import React, { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { supabase } from './lib/supabase';
 import { Colors } from './constants/Colors';
+import { initGooglePlayBilling, setupPurchaseListener, cleanupGooglePlayBilling } from './lib/googlePlayBilling';
+import { configureGoogleSignIn } from './lib/googleSignIn';
+import { logScreenView, logEvent, AnalyticsEvents, setUserId } from './lib/analytics';
 
 // Screens
 import Login          from './screens/Login';
@@ -55,19 +60,47 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize Google integrations on app launch
+    if (Platform.OS === 'android') {
+      // Configure Google Sign-In
+      const webClientId = Constants.expoConfig?.extra?.googleWebClientId;
+      if (webClientId && webClientId !== 'YOUR_GOOGLE_WEB_CLIENT_ID') {
+        configureGoogleSignIn(webClientId);
+      }
+
+      // Initialize Google Play Billing + purchase listener
+      initGooglePlayBilling();
+      setupPurchaseListener(async ({ tier, purchaseToken }) => {
+        console.log('[App] Purchase completed:', tier);
+        // Reload profile after successful purchase
+        if (session?.user) await loadProfile(session.user.id);
+      });
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      if (session?.user) await loadProfile(session.user.id);
+      if (session?.user) {
+        await loadProfile(session.user.id);
+        setUserId(session.user.id);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      if (session?.user) await loadProfile(session.user.id);
-      else setProfile(null);
+      if (session?.user) {
+        await loadProfile(session.user.id);
+        setUserId(session.user.id);
+        logEvent(AnalyticsEvents.LOGIN, { method: 'session_restore' });
+      } else {
+        setProfile(null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      cleanupGooglePlayBilling();
+    };
   }, []);
 
   const loadProfile = async (userId) => {
