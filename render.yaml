@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: BOSSYBOO
-    runtime: python
+    name: bossyboo
+    env: python
     repo: https://github.com/teaw153-stack/Willis-Dynasty-Trust-8
     plan: free
     region: oregon
