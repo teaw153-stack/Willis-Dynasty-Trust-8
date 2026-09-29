@@ -16,22 +16,35 @@ export default function Dashboard({ navigation }) {
     // BUG FIX 1: was missing closing } on destructure — { data: { user } } not { data: { user }
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const [{ data: prof }, { data: strats }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('strategies')
+        .select(`
+          id,
+          title,
+          setup_time_minutes,
+          difficulty,
+          potential_savings_high,
+          min_tier,
+          deadline,
+          description,
+          calc_type,
+          user_strategies(status, calculated_savings)
+        `)
+        .eq('user_strategies.user_id', user.id)
+        .order('potential_savings_high', { ascending: false }),
+    ]);
     setProfile(prof);
-
-    const { data: strats } = await supabase
-      .from('strategies')
-      .select('*, user_strategies(*)')
-      .order('potential_savings_high', { ascending: false });
 
     const formatted = strats.map(s => ({
       ...s,
-      userStatus: s.user_strategies?.find(us => us.user_id === user.id)?.status || 'eligible',
-      userSavings: s.user_strategies?.find(us => us.user_id === user.id)?.calculated_savings || 0
+      userStatus: s.user_strategies?.[0]?.status || 'eligible',
+      userSavings: s.user_strategies?.[0]?.calculated_savings || 0
     }));
 
     setStrategies(formatted);
